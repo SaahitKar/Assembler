@@ -20,7 +20,8 @@ beq $t0, $0, printBit
 srlv $t3, $t3, $t0      
 
 printBit: 
-move $a0, $t3            
+move $a0, $t3 
+move $s0, $t3           
 syscall                  
  
 subi $t0, $t0, 1         
@@ -55,6 +56,9 @@ Add:
 #R format = 3 registers
 #solve for registers by reoeating the value for jumping for each register
 #found in bits 5 - 0
+
+#In each of these labels: have the same thing for the shifting of bits and the comparing of all of the different registers and the number of registers based on this
+
 
 Sub:
 #R format = 3 registers
@@ -101,31 +105,154 @@ Bne:
 #solve for registers by reoeating the value for jumping for each register
 #found in bits 31-29
 
+$Zero:
+#Print out Register $0 in the output file
+#5 bits 
 
+$AT:
+#Print out Register $1 in the output file
+#5 bits 
 
+$V0:
+#Print out Register $2 in the output file
+#5 bits 
 
-#INVALID CODE
+$V1:
+#Print out Register $3 in the output file
+#5 bits 
+
+$A0:
+#Print out Register $4 in the output file
+#5 bits 
+
+$A1:
+#Print out Register $5 in the output file
+#5 bits 
+
+$A2:
+#Print out Register $6 in the output file
+#5 bits 
+
+$A3:
+#Print out Register $7 in the output file
+#5 bits 
+
+$T0:
+#Print out Register $8 in the output file
+#5 bits 
+
+$T1:
+#Print out Register $9 in the output file
+#5 bits 
+
+$T2:
+#Print out Register $10 in the output file
+#5 bits 
+
+$T3:
+#Print out Register $11 in the output file
+#5 bits 
+
+$T4:
+#Print out Register $12 in the output file
+#5 bits 
+
+$T5:
+#Print out Register $13 in the output file
+#5 bits 
+
+$T6:
+#Print out Register $14 in the output file
+#5 bits 
+
+$T7:
+#Print out Register $15 in the output file
+#5 bits 
+
+$S0:
+#Print out Register $16 in the output file
+#5 bits 
+
+$S1:
+#Print out Register $17 in the output file
+#5 bits 
+
+$S2:
+#Print out Register $18 in the output file
+#5 bits 
+
+$S3:
+#Print out Register $19 in the output file
+#5 bits 
+
+$S4:
+#Print out Register $20 in the output file
+#5 bits 
+
+$S5:
+#Print out Register $21 in the output file
+#5 bits 
+
+$S6:
+#Print out Register $22 in the output file
+#5 bits 
+
+$S7:
+#Print out Register $23 in the output file
+#5 bits 
+
+$T8:
+#Print out Register $24 in the output file
+#5 bits 
+
+$T9:
+#Print out Register $25 in the output file
+#5 bits 
+
+$K0:
+#Print out Register $26 in the output file
+#5 bits 
+
+$K1:
+#Print out Register $27 in the output file
+#5 bits 
+
+$GP:
+#Print out Register $28 in the output file
+#5 bits 
+
+$SP:
+#Print out Register $29 in the output file
+#5 bits 
+
+$FP:
+#Print out Register $30 in the output file
+#5 bits 
+
+$RA:
+#Print out Register $31 in the output file
+#5 bits 
+
 #code used for reading and outputting a file
 main:
   # Open (for reading) a file
   li $v0, 13       # system call for open file
-  la $a0, fout     # output file name
+  #la $a0, fout     # output file name
   li $a1, 0        # flags
   syscall          # open a file (file descriptor returned in $v0)
 
   move $t0, $v0    # save file descriptor in $t0		
   
-  
   # Read to file just opened  
   li $v0, 14       # system call for read to file
-  la $a1, buffer   # address of buffer from which to write
+  #la $a1, buffer   # address of buffer from which to write
   li $a2, 10       # hardcoded buffer length
   move $a0, $t0    # put the file descriptor in $a0		
   syscall          # write to file
 
   # Get the value from certain address
 
-  la $a0, buffer #load the address into $a0
+  #la $a0, buffer #load the address into $a0
 
   li $v0, 4		# print the string out
   syscall  
@@ -138,27 +265,25 @@ main:
   li $v0, 10 		# end the file
   syscall 
 
-
-#INVALID CODE
 #code to translate from binary to decimal
 getNum:
 li $v0,4        # Print string system call
-la $a0,msg1         #"Please insert value (A > 0) : "
+#la $a0,msg1         #"Please insert value (A > 0) : "
 syscall
 
-la $a0, empty
+#la $a0, empty
 li $a1, 16              # load 16 as max length to read into $a1
 li $v0,8                # 8 is string system call
 syscall
 
-la $a0, empty
+#la $a0, empty
 li $v0, 4               # print string
 syscall
 
 li $t4, 0               # initialize sum to 0
 
 startConvert:
-  la $t1, empty
+#la $t1, empty
   li $t9, 16                # initialize counter to 16
 
 firstByte:
@@ -189,7 +314,7 @@ convert:
 
 printSum:
    srlv $t4, $t4, $t9
-   la $a0, sumMsg
+   #la $a0, sumMsg
    li $v0, 4
    syscall
 
