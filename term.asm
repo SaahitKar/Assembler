@@ -1,113 +1,324 @@
 .data
-filePrompt: .asciiz "Enter the name of the file: "
-inputFile: .space 100
-textIn: .space 100
-x: .word 0x014B4824
- 
-.text 
+filename: .asciiz "testArch.txt"
+errorMessage: .asciiz "ERROR: unrecognized opcode"
+buffer: .space 9
+numericalValue: .word
+endl: .asciiz "\n"
+opcode: .word
+immediate: .word
 
-lw $s0, x                    
-addiu $t0, $zero, 31           
-li $t1, 1                     
-sll $t1, $t1, 31            
-li $v0, 1                   
+.text
+main:
+	la $s1,buffer
+	
+	li $v0,13     # syscall for open file
+	la $a0,filename   # input file name
+	li $a1,0      # read flag
+	li $a2,0      # ignore mode 	
+	syscall       # open file 
+	move $s0,$v0  # save the file descriptor 
+    
+readData:
+	#Load the file for reading
+	li $v0,14
+	move $a0, $s0 #Pass file descriptor as an argument
+	move $a1,$s1 #Pass the buffer that will store the string as an argument
+	li $a2,9
+	syscall
+	blez $v0, program_finished #if nothing is read from the file end the program
+	addi $s3,$s3,9
+	add $s3,$s3,$t1
+	
+	la $t6,buffer
+	addi $t3,$zero,0
+	addi $t5,$zero,0
+	stringLoop:
+		addi $t4, $zero,0 #store 0 in $t4, $t4 will store each character from the string
+		add $s7, $t6, $t3 # $s7 = t3th character in the string
+		lb $t4, 0($s7) #cload character into $t4
+		beq $t3, 8, postLoop #if loop counter == 8 stop the loop
+		bgt $t4, 58, letter #if the character read is deemed to be a letter, then go to branch letter
+		sub $t4, $t4, 48 # else subtract 48 from the char (gets numerical value from char '0' = 0, '1' = 1 etc.).
+		process:
+		#t5 has total
+		sll $t5,$t5,4 #multiply total by 16
+		add $t5,$t5,$t4 #add value of $t4 to the total
+		addi $t3,$t3,1#increment loop counter
+		j stringLoop
+		
+		
+		
+		
+	
 
-loop: 
-
-beq $t0, -1, stopLoop  
-and $t3, $s0, $t1       
-beq $t0, $0, printBit   
-srlv $t3, $t3, $t0      
-
-printBit: 
-move $a0, $t3 
-move $s0, $t3           
-syscall                  
- 
-subi $t0, $t0, 1         
-srl $t1, $t1, 1           
-j loop 
-  
-stopLoop: 
-#
-sll $t4, $t1, 26
-
-#
-srl, $t5, $t1, 26
-
-li $t3, 100000
-beq $t4, $t1, Add #jump to and and find the register values
-li $t3, 100010
-beq $t4, $t1, Sub #jump to and and find the register values
-li $t3, 000010
-beq $t4, $t1, Srl
-li $t3, 000000
-beq $t4, $t1, Sll
-li $t3, 100100
-beq $t4, $t1, And
-li $t3, 100101
-beq $t4, $t1, Or
-li $t3, 100111
-beq $t4, $t1, Nor
-li $t3, 101010
-beq $t4, $t1, Slt
-
+		
+	
+	postLoop:
+	j readData
+		
+	letter:
+	sub $t4, $t4, 87
+	j process
+	
+	#
+	srl $t3, $t1, 26
+	
+	li $t3, 10000000000000000000000000000000
+	beq $t4, $t1, Add #jump to and and find the register values
+	li $t3, 10001000000000000000000000000000
+	beq $t4, $t1, Sub #jump to and and find the register values
+	li $t3, 00001000000000000000000000000000
+	beq $t4, $t1, Srl
+	li $t3, 00000000000000000000000000000000
+	beq $t4, $t1, Sll
+	li $t3, 10010000000000000000000000000000
+	beq $t4, $t1, And
+	li $t3, 10010100000000000000000000000000
+	beq $t4, $t1, Or
+	li $t3, 10011100000000000000000000000000
+	beq $t4, $t1, Nor
+	li $t3, 10101000000000000000000000000000
+	beq $t4, $t1, Slt
+	
 Add: 
-#R format = 3 registers
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
+#Register 3
+sll $t3, $t1, 16
+srl $t4, $t3, 11
+move $t4, $t5
+j RegisterBranch
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
 
-#In each of these labels: have the same thing for the shifting of bits and the comparing of all of the different registers and the number of registers based on this
+Sub: 
+#Register 3
+sll $t3, $t1, 16
+srl $t4, $t3, 11
+move $t4, $t5
+j RegisterBranch
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
 
-
-Sub:
-#R format = 3 registers
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
-
-Srl: 
-#R format = 2 registers & 1 constant
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
-
-Sll: 
-#R format = 2 registers & 1 constant
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
+Div:
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
 
 And:
-#R format = 3 registers
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
+#Register 3
+sll $t3, $t1, 16
+srl $t4, $t3, 11
+move $t4, $t5
+j RegisterBranch
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
 
 Or:
-#R format = 3 registers
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
+#Register 3
+sll $t3, $t1, 16
+srl $t4, $t3, 11
+move $t4, $t5
+j RegisterBranch
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
 
-Nor: 
-#R format = 3 registers
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
+Nor:
+#Register 3
+sll $t3, $t1, 16
+srl $t4, $t3, 11
+move $t4, $t5
+j RegisterBranch
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
 
-Slt: 
-#R format = 3 registers
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 5 - 0
-
-Beq: 
-#R format = 2 registers & 1 Label
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 31-29
+Slt:
+#Register 3
+sll $t3, $t1, 16
+srl $t4, $t3, 11
+move $t4, $t5
+j RegisterBranch
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
 
 Bne: 
-#R format = 2 registers & 1 Label
-#solve for registers by reoeating the value for jumping for each register
-#found in bits 31-29
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
+
+Beq:
+#Register 1
+sll $t3, $t1, 6
+srl $t4, $t3, 21
+move $t4, $t5
+j RegisterBranch
+#Register 2
+sll $t3, $t1, 11
+srl $t4, $t3, 16
+move $t4, $t5
+j RegisterBranch
+
+RegisterBranch:
+li $t6, 00000000000000000000000000000000
+beq $t5, $t6 ,$Zero
+
+li $t6, 00000000000000000000000000000001
+beq $t5, $t6 ,$At
+
+li $t6, 00000000000000000000000000000010
+beq $t5, $t6 ,$V0
+
+li $t6, 00000000000000000000000000000011
+beq $t5, $t6 ,$V1
+
+li $t6, 00000000000000000000000000000100
+beq $t5, $t6 ,$A0
+
+li $t6, 00000000000000000000000000000101
+beq $t5, $t6 ,$A1
+
+li $t6, 00000000000000000000000000000110
+beq $t5, $t6 ,$A2
+
+li $t6, 00000000000000000000000000000111
+beq $t5, $t6 ,$A3
+
+li $t6, 00000000000000000000000000001000
+beq $t5, $t6 ,$T0
+
+li $t6, 00000000000000000000000000001001
+beq $t5, $t6 ,$T1
+
+li $t6, 00000000000000000000000000001010
+beq $t5, $t6 ,$T2
+
+li $t6, 00000000000000000000000000001011
+beq $t5, $t6 ,$T3
+
+li $t6, 00000000000000000000000000001100
+beq $t5, $t6 ,$T4
+
+li $t6, 00000000000000000000000000001101
+beq $t5, $t6 ,$T5
+
+li $t6, 00000000000000000000000000001110
+beq $t5, $t6 ,$T6
+
+li $t6, 00000000000000000000000000001111
+beq $t5, $t6 ,$T7
+
+li $t6, 00000000000000000000000000010000
+beq $t5, $t6 ,$S0
+
+li $t6, 00000000000000000000000000010001
+beq $t5, $t6 ,$S1
+
+li $t6, 00000000000000000000000000010010
+beq $t5, $t6 ,$S2
+
+li $t6, 00000000000000000000000000010011
+beq $t5, $t6 ,$S3
+
+li $t6, 00000000000000000000000000010100
+beq $t5, $t6 ,$S4
+
+li $t6, 00000000000000000000000000010101
+beq $t5, $t6 ,$S5
+
+li $t6, 00000000000000000000000000010110
+beq $t5, $t6 ,$S6
+
+li $t6, 00000000000000000000000000010111
+beq $t5, $t6 ,$S7
+
+li $t6, 00000000000000000000000000011000
+beq $t5, $t6 ,$T8
+
+li $t6, 00000000000000000000000000011001
+beq $t5, $t6 ,$T9
+
+li $t6, 00000000000000000000000000011010
+beq $t5, $t6 ,$K0
+
+li $t6, 00000000000000000000000000011011
+beq $t5, $t6 ,$K1
+
+li $t6, 00000000000000000000000000011100
+beq $t5, $t6 ,$GP
+
+li $t6, 00000000000000000000000000011101
+beq $t5, $t6 ,$SP
+
+li $t6, 00000000000000000000000000011110
+beq $t5, $t6 ,$FP
+
+li $t6, 00000000000000000000000000011111
+beq $t5, $t6 ,$RA
+
 
 $Zero:
 #Print out Register $0 in the output file
-#5 bits 
+#5 bits
 
 $AT:
 #Print out Register $1 in the output file
@@ -233,94 +444,15 @@ $RA:
 #Print out Register $31 in the output file
 #5 bits 
 
-#code used for reading and outputting a file
-main:
-  # Open (for reading) a file
-  li $v0, 13       # system call for open file
-  #la $a0, fout     # output file name
-  li $a1, 0        # flags
-  syscall          # open a file (file descriptor returned in $v0)
-
-  move $t0, $v0    # save file descriptor in $t0		
-  
-  # Read to file just opened  
-  li $v0, 14       # system call for read to file
-  #la $a1, buffer   # address of buffer from which to write
-  li $a2, 10       # hardcoded buffer length
-  move $a0, $t0    # put the file descriptor in $a0		
-  syscall          # write to file
-
-  # Get the value from certain address
-
-  #la $a0, buffer #load the address into $a0
-
-  li $v0, 4		# print the string out
-  syscall  
-
-  # Close the file 
+program_finished:
+# Close the file 
   li $v0, 16       # system call for close file
-  move $a0, $t0    # Restore fd
+  move $a0, $s0    # Restore fd
   syscall          # close file
 
   li $v0, 10 		# end the file
   syscall 
-
-#code to translate from binary to decimal
-getNum:
-li $v0,4        # Print string system call
-#la $a0,msg1         #"Please insert value (A > 0) : "
-syscall
-
-#la $a0, empty
-li $a1, 16              # load 16 as max length to read into $a1
-li $v0,8                # 8 is string system call
-syscall
-
-#la $a0, empty
-li $v0, 4               # print string
-syscall
-
-li $t4, 0               # initialize sum to 0
-
-startConvert:
-#la $t1, empty
-  li $t9, 16                # initialize counter to 16
-
-firstByte:
-  lb $a0, ($t1)      # load the first byte
-  blt $a0, 48, printSum 
-  addi $t1, $t1, 1          # increment offset
-  subi $a0, $a0, 48         # subtract 48 to convert to int value
-  beq $a0, 0, isZero
-  beq $a0, 1, isOne
-  j convert     # 
-
-isZero:
-   subi $t9, $t9, 1 # decrement counter
-   j firstByte
-
- isOne:                   # do 2^counter 
-   li $t8, 1               # load 1
-   sllv $t5, $t8, $t9    # shift left by counter = 1 * 2^counter, store in $t5
-   add $t4, $t4, $t5         # add sum to previous sum 
-
-   move $a0, $t4        # load sum
-   li $v0, 1              # print int
-   syscall
-   subi $t9, $t9, 1 # decrement counter
-   j firstByte
-
-convert:
-
-printSum:
-   srlv $t4, $t4, $t9
-   #la $a0, sumMsg
-   li $v0, 4
-   syscall
-
- move $a0, $t4      # load sum
- li $v0, 1      # print int
- syscall
-
-exitProgram: li $v0, 10
-syscall
+    
+    
+    
+    
